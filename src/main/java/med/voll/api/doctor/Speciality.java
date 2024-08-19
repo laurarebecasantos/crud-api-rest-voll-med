@@ -1,6 +1,6 @@
 package med.voll.api.doctor;
 
-public enum Specialty {
+public enum Speciality {
 
     CARDIOLOGY,
     DERMATOLOGY,
