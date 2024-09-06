@@ -25,7 +25,7 @@ public class DoctorService {
     }
 
     public List<DoctorListingDto> listDoctors() {
-        return doctorRepository.findAll()
+        return doctorRepository.findAllByActiveTrue()
                 .stream()
                 .map(DoctorListingDto::new)
                 .collect(Collectors.toList());
@@ -38,8 +38,17 @@ public class DoctorService {
         return doctorRepository.save(doctor);
     }
 
+    @Transactional
     public void deleteDoctors(Long id) {
         Doctor doctor = doctorRepository.getReferenceById(id);
         doctorRepository.delete(doctor);
     }
+
+    @Transactional
+    public Doctor statusDoctors(Long id) {
+        Doctor doctor = doctorRepository.getReferenceById(id);
+        doctor.statusInactiveData();
+        return doctorRepository.save(doctor);
+    }
+
 }
