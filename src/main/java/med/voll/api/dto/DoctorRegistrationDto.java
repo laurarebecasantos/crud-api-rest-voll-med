@@ -27,5 +27,7 @@ public record DoctorRegistrationDto(
         Speciality speciality,
 
         @Valid
-        AddressDto address) {
+        AddressDto address,
+
+        Boolean active) {
 }
