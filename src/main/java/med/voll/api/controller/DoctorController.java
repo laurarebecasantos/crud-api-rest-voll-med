@@ -44,4 +44,11 @@ public class DoctorController {
         doctorService.deleteDoctors(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{id}/status")
+    @Transactional
+    public ResponseEntity<Void> status(@PathVariable Long id) {
+        doctorService.statusDoctors(id);
+        return ResponseEntity.noContent().build();
+    }
 }
