@@ -3,9 +3,8 @@ package med.voll.api.dto;
 import jakarta.validation.constraints.NotNull;
 
 public record DoctorUpdateDto(
-
         @NotNull
-        Long id,
+        Boolean active,
 
         String name,
 

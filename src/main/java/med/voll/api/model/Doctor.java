@@ -31,14 +31,16 @@ public class Doctor {
     @Embedded
     private Address address;
 
+    private Boolean active;
+
     public Doctor(DoctorRegistrationDto data) {
+        this.active = true;
         this.name = data.name();
         this.email = data.email();
         this.phone = data.phone();
         this.crm = data.crm();
         this.speciality = data.speciality();
         this.address = new Address(data.address());
-
     }
 
     public void updateData(DoctorUpdateDto doctorUpdateDto) {
@@ -54,5 +56,12 @@ public class Doctor {
         if (doctorUpdateDto.address() != null) {
             this.address.updateAddressDetails(doctorUpdateDto.address());
         }
+        if (doctorUpdateDto.active() != true) {
+            this.active = doctorUpdateDto.active();
+        }
+    }
+
+    public  void statusInactiveData() {
+        this.active = false;
     }
 }
