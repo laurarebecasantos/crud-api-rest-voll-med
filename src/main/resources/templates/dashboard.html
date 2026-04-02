@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voll.med - Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div>
+            <span class="brand">Voll.med</span>
+            <a th:href="@{/web/dashboard}">Dashboard</a>
+            <a th:href="@{/web/doctors}">Medicos</a>
+            <a th:href="@{/web/patients}">Pacientes</a>
+            <a th:href="@{/web/appointments}">Consultas</a>
+        </div>
+        <div>
+            <span sec:authentication="name">User</span>
+            <a th:href="@{/logout}">Sair</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1 style="margin-bottom: 1.5rem;">Dashboard</h1>
+        <div class="dashboard-grid">
+            <div class="stat-card">
+                <h3>Medicos Ativos</h3>
+                <div class="number" th:text="${doctorCount}">0</div>
+                <a th:href="@{/web/doctors}" class="btn btn-primary btn-sm" style="margin-top: 1rem;">Ver todos</a>
+            </div>
+            <div class="stat-card">
+                <h3>Acesso Rapido</h3>
+                <div style="margin-top: 1rem;">
+                    <a th:href="@{/web/doctors/new}" class="btn btn-success btn-sm">Novo Medico</a>
+                    <a th:href="@{/web/patients/new}" class="btn btn-success btn-sm">Novo Paciente</a>
+                    <a th:href="@{/web/appointments/new}" class="btn btn-primary btn-sm">Nova Consulta</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -6,13 +6,15 @@ import med.voll.api.dto.DoctorListingDto;
 import med.voll.api.dto.DoctorRegistrationDto;
 import med.voll.api.dto.DoctorUpdateDto;
 import med.voll.api.model.Doctor;
+import med.voll.api.model.enums.Speciality;
 import med.voll.api.repository.DoctorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
 
 @Service
 public class DoctorService {
@@ -31,6 +33,16 @@ public class DoctorService {
                 .stream()
                 .map(DoctorListingDto::new)
                 .collect(Collectors.toList());
+    }
+
+    public Page<DoctorListingDto> listDoctorsPaginated(Pageable pageable) {
+        return doctorRepository.findAllByActiveTrue(pageable)
+                .map(DoctorListingDto::new);
+    }
+
+    public Page<DoctorListingDto> listDoctorsFiltered(String name, Speciality speciality, Pageable pageable) {
+        return doctorRepository.findByFilters(name, speciality, pageable)
+                .map(DoctorListingDto::new);
     }
 
     @Transactional

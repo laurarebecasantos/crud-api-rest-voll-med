@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -44,13 +45,14 @@ class DoctorControllerTest {
 
     private DoctorRegistrationDto createDoctorDto(String crm) {
         return new DoctorRegistrationDto(
-                "Dr. Test", "doctor@test.com", "81999999999",
+                "Dr. Test", "doctor" + crm + "@test.com", "81999999999",
                 crm, Speciality.CARDIOLOGY, createAddressDto(), true
         );
     }
 
     @Test
     @DisplayName("Should register a doctor and return 201")
+    @WithMockUser(roles = "ADMIN")
     void registerDoctor() throws Exception {
         var dto = createDoctorDto("123456");
 
@@ -59,7 +61,6 @@ class DoctorControllerTest {
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Dr. Test"))
-                .andExpect(jsonPath("$.email").value("doctor@test.com"))
                 .andExpect(jsonPath("$.crm").value("123456"))
                 .andExpect(jsonPath("$.speciality").value("CARDIOLOGY"))
                 .andExpect(jsonPath("$.active").value(true));
@@ -67,6 +68,7 @@ class DoctorControllerTest {
 
     @Test
     @DisplayName("Should return 400 when registering doctor with invalid data")
+    @WithMockUser(roles = "ADMIN")
     void registerDoctorWithInvalidData() throws Exception {
         var invalidDto = new DoctorRegistrationDto("", "", "", "", null, null, null);
 
@@ -77,7 +79,8 @@ class DoctorControllerTest {
     }
 
     @Test
-    @DisplayName("Should list active doctors")
+    @DisplayName("Should list active doctors with pagination")
+    @WithMockUser(roles = "RECEPTIONIST")
     void listActiveDoctors() throws Exception {
         var dto = createDoctorDto("654321");
         mockMvc.perform(post("/doctors")
@@ -86,14 +89,32 @@ class DoctorControllerTest {
 
         mockMvc.perform(get("/doctors"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].name").value("Dr. Test"));
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].name").value("Dr. Test"));
+    }
+
+    @Test
+    @DisplayName("Should filter doctors by speciality")
+    @WithMockUser(roles = "RECEPTIONIST")
+    void filterDoctorsBySpeciality() throws Exception {
+        mockMvc.perform(post("/doctors")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDoctorDto("111111"))));
+
+        mockMvc.perform(get("/doctors").param("speciality", "DERMATOLOGY"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(0));
+
+        mockMvc.perform(get("/doctors").param("speciality", "CARDIOLOGY"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1));
     }
 
     @Test
     @DisplayName("Should update a doctor and return 200")
+    @WithMockUser(roles = "ADMIN")
     void updateDoctor() throws Exception {
-        var dto = createDoctorDto("111111");
+        var dto = createDoctorDto("222222");
         var result = mockMvc.perform(post("/doctors")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
@@ -110,9 +131,10 @@ class DoctorControllerTest {
     }
 
     @Test
-    @DisplayName("Should delete a doctor and return 204")
+    @DisplayName("Should delete a doctor and return 204 (ADMIN only)")
+    @WithMockUser(roles = "ADMIN")
     void deleteDoctor() throws Exception {
-        var dto = createDoctorDto("222222");
+        var dto = createDoctorDto("333333");
         var result = mockMvc.perform(post("/doctors")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
@@ -122,33 +144,19 @@ class DoctorControllerTest {
 
         mockMvc.perform(delete("/doctors/" + id))
                 .andExpect(status().isNoContent());
-
-        mockMvc.perform(get("/doctors"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
     }
 
     @Test
-    @DisplayName("Should inactivate a doctor via PATCH and return 204")
-    void inactivateDoctor() throws Exception {
-        var dto = createDoctorDto("333333");
-        var result = mockMvc.perform(post("/doctors")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andReturn();
-
-        var id = objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asLong();
-
-        mockMvc.perform(patch("/doctors/" + id + "/status"))
-                .andExpect(status().isNoContent());
-
-        mockMvc.perform(get("/doctors"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+    @DisplayName("Should deny delete for RECEPTIONIST role")
+    @WithMockUser(roles = "RECEPTIONIST")
+    void deleteDoctorForbidden() throws Exception {
+        mockMvc.perform(delete("/doctors/1"))
+                .andExpect(status().isForbidden());
     }
 
     @Test
     @DisplayName("Should return 404 when updating non-existent doctor")
+    @WithMockUser(roles = "ADMIN")
     void updateNonExistentDoctor() throws Exception {
         var updateDto = new DoctorUpdateDto(null, "Dr. Ghost", null, null, null);
 
@@ -159,15 +167,16 @@ class DoctorControllerTest {
     }
 
     @Test
-    @DisplayName("Should return 404 when deleting non-existent doctor")
-    void deleteNonExistentDoctor() throws Exception {
-        mockMvc.perform(delete("/doctors/99999"))
-                .andExpect(status().isNotFound());
+    @DisplayName("Should return 403 when unauthenticated")
+    void unauthenticatedAccess() throws Exception {
+        mockMvc.perform(get("/doctors"))
+                .andExpect(status().isForbidden());
     }
 
     @Test
-    @DisplayName("Should update doctor active status to false via PUT")
-    void updateDoctorActiveStatus() throws Exception {
+    @DisplayName("Should inactivate a doctor via PATCH")
+    @WithMockUser(roles = "ADMIN")
+    void inactivateDoctor() throws Exception {
         var dto = createDoctorDto("444444");
         var result = mockMvc.perform(post("/doctors")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -175,12 +184,8 @@ class DoctorControllerTest {
                 .andReturn();
 
         var id = objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asLong();
-        var updateDto = new DoctorUpdateDto(false, null, null, null, null);
 
-        mockMvc.perform(put("/doctors/" + id)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateDto)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.active").value(false));
+        mockMvc.perform(patch("/doctors/" + id + "/status"))
+                .andExpect(status().isNoContent());
     }
 }

@@ -17,6 +17,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.notFound().build();
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorMessageDto> handleBusinessRule(IllegalArgumentException ex) {
+        return ResponseEntity.badRequest().body(new ErrorMessageDto(ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<List<ValidationErrorDto>> handleValidationError(MethodArgumentNotValidException ex) {
         var errors = ex.getFieldErrors().stream()
@@ -24,6 +29,8 @@ public class GlobalExceptionHandler {
                 .toList();
         return ResponseEntity.badRequest().body(errors);
     }
+
+    public record ErrorMessageDto(String message) {}
 
     public record ValidationErrorDto(String field, String message) {
         public ValidationErrorDto(FieldError error) {

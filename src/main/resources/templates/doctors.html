@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voll.med - Medicos</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div>
+            <span class="brand">Voll.med</span>
+            <a th:href="@{/web/dashboard}">Dashboard</a>
+            <a th:href="@{/web/doctors}">Medicos</a>
+            <a th:href="@{/web/patients}">Pacientes</a>
+            <a th:href="@{/web/appointments}">Consultas</a>
+        </div>
+        <div>
+            <span sec:authentication="name">User</span>
+            <a th:href="@{/logout}">Sair</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="actions">
+            <h1>Medicos</h1>
+            <a th:href="@{/web/doctors/new}" class="btn btn-success">+ Novo Medico</a>
+        </div>
+
+        <div class="card">
+            <form th:action="@{/web/doctors}" method="get" class="filter-bar">
+                <div class="form-group">
+                    <label for="name">Nome</label>
+                    <input type="text" id="name" name="name" th:value="${nameFilter}" placeholder="Buscar por nome">
+                </div>
+                <div class="form-group">
+                    <label for="speciality">Especialidade</label>
+                    <select id="speciality" name="speciality">
+                        <option value="">Todas</option>
+                        <option th:each="s : ${specialities}" th:value="${s}" th:text="${s}"
+                                th:selected="${s == specialityFilter}"></option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Email</th>
+                        <th>CRM</th>
+                        <th>Especialidade</th>
+                        <th>Status</th>
+                        <th>Acoes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="doctor : ${doctors.content}">
+                        <td th:text="${doctor.id()}"></td>
+                        <td th:text="${doctor.name()}"></td>
+                        <td th:text="${doctor.email()}"></td>
+                        <td th:text="${doctor.crm()}"></td>
+                        <td th:text="${doctor.speciality()}"></td>
+                        <td>
+                            <span th:if="${doctor.active()}" class="badge badge-active">Ativo</span>
+                            <span th:unless="${doctor.active()}" class="badge badge-inactive">Inativo</span>
+                        </td>
+                        <td>
+                            <button class="btn btn-warning btn-sm" onclick="alert('Funcionalidade de edicao via frontend')">Editar</button>
+                            <button class="btn btn-danger btn-sm" onclick="if(confirm('Confirma exclusao?')) alert('Deletado!')">Excluir</button>
+                        </td>
+                    </tr>
+                    <tr th:if="${doctors.content.isEmpty()}">
+                        <td colspan="7" style="text-align: center;">Nenhum medico encontrado.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="pagination" th:if="${doctors.totalPages > 1}">
+                <a th:if="${doctors.number > 0}"
+                   th:href="@{/web/doctors(page=${doctors.number - 1}, name=${nameFilter}, speciality=${specialityFilter})}">Anterior</a>
+                <span th:each="i : ${#numbers.sequence(0, doctors.totalPages - 1)}"
+                      th:class="${i == doctors.number ? 'active' : ''}">
+                    <a th:href="@{/web/doctors(page=${i}, name=${nameFilter}, speciality=${specialityFilter})}"
+                       th:text="${i + 1}"></a>
+                </span>
+                <a th:if="${doctors.number < doctors.totalPages - 1}"
+                   th:href="@{/web/doctors(page=${doctors.number + 1}, name=${nameFilter}, speciality=${specialityFilter})}">Proximo</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

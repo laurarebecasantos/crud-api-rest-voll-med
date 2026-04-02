@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voll.med - Consultas</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div>
+            <span class="brand">Voll.med</span>
+            <a th:href="@{/web/dashboard}">Dashboard</a>
+            <a th:href="@{/web/doctors}">Medicos</a>
+            <a th:href="@{/web/patients}">Pacientes</a>
+            <a th:href="@{/web/appointments}">Consultas</a>
+        </div>
+        <div>
+            <span sec:authentication="name">User</span>
+            <a th:href="@{/logout}">Sair</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="actions">
+            <h1>Consultas</h1>
+            <a th:href="@{/web/appointments/new}" class="btn btn-success">+ Nova Consulta</a>
+        </div>
+
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Medico</th>
+                        <th>Paciente</th>
+                        <th>Data/Hora</th>
+                        <th>Status</th>
+                        <th>Acoes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="appt : ${appointments.content}">
+                        <td th:text="${appt.id()}"></td>
+                        <td th:text="${appt.doctorName()} + ' (CRM ' + ${appt.doctorCrm()} + ')'"></td>
+                        <td th:text="${appt.patientName()}"></td>
+                        <td th:text="${#temporals.format(appt.appointmentDate(), 'dd/MM/yyyy HH:mm')}"></td>
+                        <td>
+                            <span th:if="${appt.status().name() == 'SCHEDULED'}" class="badge badge-scheduled">Agendada</span>
+                            <span th:if="${appt.status().name() == 'COMPLETED'}" class="badge badge-completed">Concluida</span>
+                            <span th:if="${appt.status().name() == 'CANCELLED'}" class="badge badge-cancelled">Cancelada</span>
+                        </td>
+                        <td>
+                            <button th:if="${appt.status().name() == 'SCHEDULED'}"
+                                    class="btn btn-success btn-sm"
+                                    onclick="alert('Consulta concluida!')">Concluir</button>
+                            <button th:if="${appt.status().name() == 'SCHEDULED'}"
+                                    class="btn btn-danger btn-sm"
+                                    onclick="if(confirm('Confirma cancelamento?')) alert('Cancelada!')">Cancelar</button>
+                        </td>
+                    </tr>
+                    <tr th:if="${appointments.content.isEmpty()}">
+                        <td colspan="6" style="text-align: center;">Nenhuma consulta encontrada.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="pagination" th:if="${appointments.totalPages > 1}">
+                <a th:if="${appointments.number > 0}"
+                   th:href="@{/web/appointments(page=${appointments.number - 1})}">Anterior</a>
+                <span th:each="i : ${#numbers.sequence(0, appointments.totalPages - 1)}"
+                      th:class="${i == appointments.number ? 'active' : ''}">
+                    <a th:href="@{/web/appointments(page=${i})}" th:text="${i + 1}"></a>
+                </span>
+                <a th:if="${appointments.number < appointments.totalPages - 1}"
+                   th:href="@{/web/appointments(page=${appointments.number + 1})}">Proximo</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voll.med - Pacientes</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div>
+            <span class="brand">Voll.med</span>
+            <a th:href="@{/web/dashboard}">Dashboard</a>
+            <a th:href="@{/web/doctors}">Medicos</a>
+            <a th:href="@{/web/patients}">Pacientes</a>
+            <a th:href="@{/web/appointments}">Consultas</a>
+        </div>
+        <div>
+            <span sec:authentication="name">User</span>
+            <a th:href="@{/logout}">Sair</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="actions">
+            <h1>Pacientes</h1>
+            <a th:href="@{/web/patients/new}" class="btn btn-success">+ Novo Paciente</a>
+        </div>
+
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Email</th>
+                        <th>Telefone</th>
+                        <th>CPF</th>
+                        <th>Status</th>
+                        <th>Acoes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="patient : ${patients.content}">
+                        <td th:text="${patient.id()}"></td>
+                        <td th:text="${patient.name()}"></td>
+                        <td th:text="${patient.email()}"></td>
+                        <td th:text="${patient.phone()}"></td>
+                        <td th:text="${patient.cpf()}"></td>
+                        <td>
+                            <span th:if="${patient.active()}" class="badge badge-active">Ativo</span>
+                            <span th:unless="${patient.active()}" class="badge badge-inactive">Inativo</span>
+                        </td>
+                        <td>
+                            <button class="btn btn-warning btn-sm" onclick="alert('Funcionalidade de edicao via frontend')">Editar</button>
+                            <button class="btn btn-danger btn-sm" onclick="if(confirm('Confirma exclusao?')) alert('Deletado!')">Excluir</button>
+                        </td>
+                    </tr>
+                    <tr th:if="${patients.content.isEmpty()}">
+                        <td colspan="7" style="text-align: center;">Nenhum paciente encontrado.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="pagination" th:if="${patients.totalPages > 1}">
+                <a th:if="${patients.number > 0}"
+                   th:href="@{/web/patients(page=${patients.number - 1})}">Anterior</a>
+                <span th:each="i : ${#numbers.sequence(0, patients.totalPages - 1)}"
+                      th:class="${i == patients.number ? 'active' : ''}">
+                    <a th:href="@{/web/patients(page=${i})}" th:text="${i + 1}"></a>
+                </span>
+                <a th:if="${patients.number < patients.totalPages - 1}"
+                   th:href="@{/web/patients(page=${patients.number + 1})}">Proximo</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
