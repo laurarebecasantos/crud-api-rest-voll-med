@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
 
@@ -22,20 +23,23 @@ public class DoctorController {
 
     @PostMapping
     @Transactional
-    public ResponseEntity<Doctor> register(@Valid @RequestBody DoctorRegistrationDto data){
+    public ResponseEntity<DoctorListingDto> register(@Valid @RequestBody DoctorRegistrationDto data,
+                                                     UriComponentsBuilder uriBuilder) {
         Doctor dataSaved = doctorService.registerDoctor(data);
-        return ResponseEntity.status(200).body(dataSaved);
+        var uri = uriBuilder.path("/doctors/{id}").buildAndExpand(dataSaved.getId()).toUri();
+        return ResponseEntity.created(uri).body(new DoctorListingDto(dataSaved));
     }
 
     @GetMapping
-    public List<DoctorListingDto> list() {
-        return doctorService.listDoctors();
+    public ResponseEntity<List<DoctorListingDto>> list() {
+        return ResponseEntity.ok(doctorService.listDoctors());
     }
 
     @PutMapping("/{id}")
     @Transactional
-    public void update(@PathVariable Long id, @Valid @RequestBody DoctorUpdateDto updateDto) {
+    public ResponseEntity<DoctorListingDto> update(@PathVariable Long id, @Valid @RequestBody DoctorUpdateDto updateDto) {
         Doctor updateDataSaved = doctorService.updateDoctor(id, updateDto);
+        return ResponseEntity.ok(new DoctorListingDto(updateDataSaved));
     }
 
     @DeleteMapping("/{id}")
