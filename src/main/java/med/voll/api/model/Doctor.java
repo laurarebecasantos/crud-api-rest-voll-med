@@ -56,7 +56,7 @@ public class Doctor {
         if (doctorUpdateDto.address() != null) {
             this.address.updateAddressDetails(doctorUpdateDto.address());
         }
-        if (doctorUpdateDto.active() != true) {
+        if (doctorUpdateDto.active() != null) {
             this.active = doctorUpdateDto.active();
         }
     }
