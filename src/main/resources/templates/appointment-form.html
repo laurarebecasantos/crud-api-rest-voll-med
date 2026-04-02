@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voll.med - Nova Consulta</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div>
+            <span class="brand">Voll.med</span>
+            <a th:href="@{/web/dashboard}">Dashboard</a>
+            <a th:href="@{/web/doctors}">Medicos</a>
+            <a th:href="@{/web/patients}">Pacientes</a>
+            <a th:href="@{/web/appointments}">Consultas</a>
+        </div>
+        <div>
+            <span sec:authentication="name">User</span>
+            <a th:href="@{/logout}">Sair</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1 style="margin-bottom: 1.5rem;">Agendar Consulta</h1>
+
+        <div class="card">
+            <div id="successMsg" class="alert alert-success" style="display:none;">Consulta agendada com sucesso!</div>
+            <div id="errorMsg" class="alert alert-danger" style="display:none;"></div>
+
+            <form id="appointmentForm">
+                <div class="form-group">
+                    <label for="doctorId">Medico *</label>
+                    <select id="doctorId" name="doctorId" required>
+                        <option value="">Selecione um medico...</option>
+                        <option th:each="d : ${doctors}" th:value="${d.id()}"
+                                th:text="${d.name() + ' - CRM ' + d.crm() + ' (' + d.speciality() + ')'}"></option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="patientId">ID do Paciente *</label>
+                    <input type="number" id="patientId" name="patientId" required min="1">
+                </div>
+                <div class="form-group">
+                    <label for="appointmentDate">Data e Hora *</label>
+                    <input type="datetime-local" id="appointmentDate" name="appointmentDate" required>
+                </div>
+
+                <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                    <button type="submit" class="btn btn-success">Agendar</button>
+                    <a th:href="@{/web/appointments}" class="btn btn-danger">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script th:src="@{/js/appointment-form.js}"></script>
+</body>
+</html>

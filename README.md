@@ -1,159 +1,226 @@
-# Voll.med - API REST CRUD
+# Voll.med - Sistema de Gestao de Clinica Medica
 
-API REST para gerenciamento de médicos da clínica Voll.med, desenvolvida com Spring Boot 3 e Java 17.
+Sistema completo de gestao para a clinica Voll.med com API REST, autenticacao JWT, frontend web e suite de testes automatizados. Desenvolvido com Spring Boot 3 e Java 17.
 
 ## Funcionalidades
 
-### Endpoints - Médicos (`/doctors`)
+### Autenticacao (`/auth`)
 
-| Método | Endpoint | Descrição | Status Code |
-|--------|----------|-----------|-------------|
-| `POST` | `/doctors` | Cadastrar um novo médico | `201 Created` |
-| `GET` | `/doctors` | Listar todos os médicos ativos | `200 OK` |
-| `PUT` | `/doctors/{id}` | Atualizar dados de um médico | `200 OK` |
-| `DELETE` | `/doctors/{id}` | Remover um médico (hard delete) | `204 No Content` |
-| `PATCH` | `/doctors/{id}/status` | Inativar um médico (soft delete) | `204 No Content` |
+| Metodo | Endpoint | Descricao | Autenticacao |
+|--------|----------|-----------|--------------|
+| `POST` | `/auth/register` | Registrar novo usuario | Publica |
+| `POST` | `/auth/login` | Login (retorna JWT token) | Publica |
 
-### Validações
+**Perfis de acesso:**
+- `ADMIN` - Acesso total (CRUD completo + exclusao)
+- `RECEPTIONIST` - Leitura, cadastro e edicao (sem permissao de exclusao)
 
-- **Nome**: obrigatório, não pode ser vazio
-- **Email**: obrigatório, formato válido de email
-- **Telefone**: obrigatório, não pode ser vazio
-- **CRM**: obrigatório, deve conter exatamente 6 dígitos numéricos
-- **Especialidade**: obrigatória (`CARDIOLOGY`, `DERMATOLOGY`, `GYNECOLOGY`, `ORTHOPEDICS`)
-- **Endereço**: rua, bairro, CEP (8 dígitos), cidade e estado são obrigatórios
+### Medicos (`/doctors`)
 
-### Tratamento de Erros
+| Metodo | Endpoint | Descricao | Permissao |
+|--------|----------|-----------|-----------|
+| `POST` | `/doctors` | Cadastrar medico | Autenticado |
+| `GET` | `/doctors` | Listar medicos ativos (paginado + filtros) | Autenticado |
+| `PUT` | `/doctors/{id}` | Atualizar medico | Autenticado |
+| `DELETE` | `/doctors/{id}` | Remover medico | ADMIN |
+| `PATCH` | `/doctors/{id}/status` | Inativar medico | Autenticado |
 
-- `400 Bad Request` - Erros de validação com detalhes dos campos inválidos
-- `404 Not Found` - Médico não encontrado pelo ID informado
+**Filtros disponiveis:** `?name=joao&speciality=CARDIOLOGY&page=0&size=10&sort=name`
+
+### Pacientes (`/patients`)
+
+| Metodo | Endpoint | Descricao | Permissao |
+|--------|----------|-----------|-----------|
+| `POST` | `/patients` | Cadastrar paciente | Autenticado |
+| `GET` | `/patients` | Listar pacientes ativos (paginado) | Autenticado |
+| `PUT` | `/patients/{id}` | Atualizar paciente | Autenticado |
+| `DELETE` | `/patients/{id}` | Remover paciente | ADMIN |
+| `PATCH` | `/patients/{id}/status` | Inativar paciente | Autenticado |
+
+### Consultas (`/appointments`)
+
+| Metodo | Endpoint | Descricao | Permissao |
+|--------|----------|-----------|-----------|
+| `POST` | `/appointments` | Agendar consulta | Autenticado |
+| `GET` | `/appointments` | Listar consultas (paginado + filtros) | Autenticado |
+| `PATCH` | `/appointments/{id}/cancel` | Cancelar consulta (motivo obrigatorio) | Autenticado |
+| `PATCH` | `/appointments/{id}/complete` | Concluir consulta | Autenticado |
+
+**Filtros:** `?doctorId=1` ou `?patientId=1`
+
+**Regras de negocio:**
+- Nao permite agendar com medico inativo
+- Nao permite agendar com paciente inativo
+- Nao permite medico com 2 consultas no mesmo horario
+- Nao permite paciente com 2 consultas no mesmo dia
+- Cancelamento exige motivo obrigatorio
+- Data da consulta deve ser no futuro
+
+### Frontend Web
+
+| Pagina | URL | Descricao |
+|--------|-----|-----------|
+| Login | `/login` | Tela de autenticacao |
+| Dashboard | `/web/dashboard` | Painel com resumo e acesso rapido |
+| Medicos | `/web/doctors` | Listagem com filtros, paginacao e acoes |
+| Novo Medico | `/web/doctors/new` | Formulario de cadastro com validacao |
+| Pacientes | `/web/patients` | Listagem com paginacao e acoes |
+| Novo Paciente | `/web/patients/new` | Formulario de cadastro com validacao |
+| Consultas | `/web/appointments` | Listagem com status e acoes |
+| Nova Consulta | `/web/appointments/new` | Formulario de agendamento |
 
 ## Tecnologias
 
-- **Java 17**
-- **Spring Boot 3.3.2**
-- **Spring Data JPA / Hibernate** - Persistência de dados
-- **Spring Validation** - Validação de DTOs com Bean Validation (Jakarta)
-- **Flyway** - Versionamento e migração de banco de dados
-- **MySQL** - Banco de dados relacional (produção)
-- **H2 Database** - Banco de dados em memória (testes)
-- **Lombok** - Redução de código boilerplate
-- **Maven** - Gerenciamento de dependências e build
+| Tecnologia | Uso |
+|-----------|-----|
+| Java 17 | Linguagem |
+| Spring Boot 3.3.2 | Framework |
+| Spring Security | Autenticacao e autorizacao |
+| JWT (java-jwt) | Token de autenticacao na API |
+| Spring Data JPA / Hibernate | Persistencia |
+| Spring Validation | Validacao de dados |
+| Thymeleaf | Templates do frontend |
+| Flyway | Migracoes de banco de dados |
+| MySQL | Banco de dados (producao) |
+| H2 Database | Banco de dados (testes) |
+| Lombok | Reducao de boilerplate |
+| Maven | Build e dependencias |
+| GitHub Actions | CI/CD |
 
 ## Estrutura do Projeto
 
 ```
 src/
 ├── main/java/med/voll/api/
-│   ├── controller/          # Controllers REST
-│   │   ├── DoctorController.java
-│   │   └── PatientController.java
-│   ├── dto/                 # Data Transfer Objects (Records)
-│   │   ├── AddressDto.java
-│   │   ├── DoctorRegistrationDto.java
-│   │   ├── DoctorUpdateDto.java
-│   │   ├── DoctorListingDto.java
-│   │   └── PatientRegistrationDto.java
-│   ├── infra/               # Infraestrutura e configurações
-│   │   └── GlobalExceptionHandler.java
-│   ├── model/               # Entidades JPA
+│   ├── controller/
+│   │   ├── AuthenticationController.java   # Login e registro
+│   │   ├── DoctorController.java           # CRUD medicos (API)
+│   │   ├── PatientController.java          # CRUD pacientes (API)
+│   │   ├── AppointmentController.java      # Consultas (API)
+│   │   └── WebController.java              # Frontend (Thymeleaf)
+│   ├── dto/                                # Records de transferencia
+│   ├── infra/
+│   │   ├── GlobalExceptionHandler.java     # Tratamento global de erros
+│   │   └── security/
+│   │       ├── SecurityConfigurations.java # Config Spring Security
+│   │       ├── SecurityFilter.java         # Filtro JWT
+│   │       ├── TokenService.java           # Geracao/validacao JWT
+│   │       └── AuthenticationService.java  # UserDetailsService
+│   ├── model/
 │   │   ├── Doctor.java
+│   │   ├── Patient.java
+│   │   ├── Appointment.java
+│   │   ├── User.java
 │   │   ├── Address.java
 │   │   └── enums/
-│   │       └── Speciality.java
-│   ├── repository/          # Repositórios Spring Data
-│   │   └── DoctorRepository.java
-│   ├── service/             # Camada de serviço (regras de negócio)
-│   │   └── DoctorService.java
-│   └── ApiApplication.java
+│   ├── repository/
+│   │   ├── DoctorRepository.java
+│   │   ├── PatientRepository.java
+│   │   ├── AppointmentRepository.java
+│   │   └── UserRepository.java
+│   └── service/
+│       ├── DoctorService.java
+│       ├── PatientService.java
+│       └── AppointmentService.java
 ├── main/resources/
 │   ├── application.properties
-│   └── db/migration/        # Scripts Flyway
-│       ├── V1__create-table-doctors.sql
-│       ├── V2__alter-table-doctors-add-column-phone.sql
-│       └── V3__alter-table-doctors-add-column-status.sql
+│   ├── templates/                          # Paginas Thymeleaf
+│   │   ├── login.html
+│   │   ├── dashboard.html
+│   │   ├── doctors.html
+│   │   ├── doctor-form.html
+│   │   ├── patients.html
+│   │   ├── patient-form.html
+│   │   ├── appointments.html
+│   │   └── appointment-form.html
+│   ├── static/
+│   │   ├── css/style.css
+│   │   └── js/
+│   └── db/migration/                       # 6 migracoes Flyway
 └── test/
     ├── java/med/voll/api/
     │   ├── controller/
-    │   │   └── DoctorControllerTest.java    # 8 testes de integração
+    │   │   ├── DoctorControllerTest.java   # 10 testes de integracao
+    │   │   └── PatientControllerTest.java  # 6 testes de integracao
     │   ├── service/
-    │   │   └── DoctorServiceTest.java       # 9 testes unitários
-    │   ├── repository/
-    │   │   └── DoctorRepositoryTest.java    # 4 testes de repositório
-    │   └── ApiApplicationTests.java
+    │   │   ├── DoctorServiceTest.java      # 9 testes unitarios
+    │   │   └── AppointmentServiceTest.java # 8 testes unitarios
+    │   └── repository/
+    │       └── DoctorRepositoryTest.java   # 4 testes de repositorio
     └── resources/
         └── application-test.properties
 ```
 
-## Testes Automatizados
+## Testes Automatizados - 37 testes
 
-A aplicação possui **21 testes automatizados** distribuídos em 3 camadas:
+### Testes de Integracao (Controller)
+- **DoctorControllerTest (10):** CRUD completo, filtros, paginacao, controle de acesso (ADMIN/RECEPTIONIST), 401/403/404
+- **PatientControllerTest (6):** CRUD, validacao CPF, controle de acesso por perfil
 
-### Testes de Integração (`DoctorControllerTest`) - 8 testes
-- Cadastro de médico com dados válidos (retorna 201)
-- Cadastro com dados inválidos (retorna 400)
-- Listagem de médicos ativos
-- Atualização de médico existente
-- Exclusão de médico (hard delete)
-- Inativação de médico via PATCH
-- Atualização de médico inexistente (retorna 404)
-- Exclusão de médico inexistente (retorna 404)
+### Testes Unitarios (Service)
+- **DoctorServiceTest (9):** Registro, listagem, update, delete, inativacao, EntityNotFoundException
+- **AppointmentServiceTest (8):** Agendamento, regras de negocio (medico/paciente inativo, conflito horario, duplicata diaria), cancelamento, conclusao
 
-### Testes Unitários (`DoctorServiceTest`) - 9 testes
-- Registro de novo médico
-- Listagem de médicos ativos
-- Listagem vazia quando não há médicos ativos
-- Atualização de médico existente
-- Exceção ao atualizar médico inexistente
-- Exclusão de médico existente
-- Exceção ao excluir médico inexistente
-- Inativação de médico
-- Exceção ao inativar médico inexistente
-
-### Testes de Repositório (`DoctorRepositoryTest`) - 4 testes
-- Busca apenas médicos ativos
-- Retorno vazio quando todos são inativos
-- Salvar e buscar médico por ID
-- Exclusão de médico
-
-### Como executar os testes
+### Testes de Repositorio
+- **DoctorRepositoryTest (4):** findAllByActiveTrue, save, findById, delete
 
 ```bash
 mvn test
 ```
 
-Os testes utilizam banco **H2 em memória** com profile `test`, sem necessidade de MySQL.
-
 ## Como Executar
 
-### Pré-requisitos
+### Pre-requisitos
 - Java 17+
 - Maven 3.8+
 - MySQL 8+
 
-### Configuração do Banco de Dados
-
-Crie o banco de dados MySQL:
+### Configuracao do Banco de Dados
 
 ```sql
 CREATE DATABASE voll_med_db;
 ```
 
-### Execução
+### Execucao
 
 ```bash
 mvn spring-boot:run
 ```
 
-A API estará disponível em `http://localhost:8080`.
+A aplicacao estara disponivel em `http://localhost:8080`.
 
-## Exemplos de Requisições
+### Primeiro acesso
 
-### Cadastrar médico
+1. Registre um usuario via API:
+```bash
+curl -X POST http://localhost:8080/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"login": "admin", "password": "admin123", "role": "ADMIN"}'
+```
+
+2. Acesse o frontend em `http://localhost:8080/login` com as credenciais criadas.
+
+3. Ou obtenha um token JWT para usar na API:
+```bash
+curl -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"login": "admin", "password": "admin123"}'
+```
+
+4. Use o token nas requisicoes:
+```bash
+curl -H "Authorization: Bearer SEU_TOKEN" http://localhost:8080/doctors
+```
+
+## Exemplos de Requisicoes (API)
+
+### Cadastrar medico
 ```json
 POST /doctors
+Authorization: Bearer {token}
+
 {
-  "name": "Dr. João Silva",
+  "name": "Dr. Joao Silva",
   "email": "joao@voll.med",
   "phone": "81999999999",
   "crm": "123456",
@@ -169,11 +236,74 @@ POST /doctors
 }
 ```
 
-### Atualizar médico
+### Cadastrar paciente
 ```json
-PUT /doctors/1
+POST /patients
+Authorization: Bearer {token}
+
 {
-  "name": "Dr. João Silva Jr.",
-  "phone": "81988888888"
+  "name": "Maria Oliveira",
+  "email": "maria@email.com",
+  "phone": "81988888888",
+  "cpf": "12345678901",
+  "address": {
+    "street": "Rua do Sol",
+    "neighborhood": "Boa Vista",
+    "zipCode": "50000000",
+    "city": "Recife",
+    "state": "PE",
+    "number": "50"
+  }
 }
 ```
+
+### Agendar consulta
+```json
+POST /appointments
+Authorization: Bearer {token}
+
+{
+  "doctorId": 1,
+  "patientId": 1,
+  "appointmentDate": "2025-12-20T14:00:00"
+}
+```
+
+### Cancelar consulta
+```json
+PATCH /appointments/1/cancel
+Authorization: Bearer {token}
+
+{
+  "reason": "Paciente solicitou reagendamento"
+}
+```
+
+## Cenarios para Automacao de Testes
+
+Este projeto foi desenhado para maximizar cenarios de automacao:
+
+### Selenium / Robot Framework (Frontend)
+- Login com credenciais validas/invalidas
+- Navegacao entre paginas (Dashboard, Medicos, Pacientes, Consultas)
+- Preenchimento de formularios com validacao
+- Filtros e paginacao na listagem de medicos
+- Acoes de editar, excluir, inativar
+- Mensagens de sucesso/erro
+- Modal de confirmacao de exclusao
+- Controle de acesso por perfil (ADMIN vs RECEPTIONIST)
+
+### Robot Framework + RequestsLibrary (API)
+- CRUD completo de medicos, pacientes e consultas
+- Validacao de status codes (200, 201, 204, 400, 403, 404)
+- Autenticacao JWT (login, token expirado, token invalido)
+- Regras de negocio de agendamento
+- Paginacao e filtros via query params
+
+### JMeter / Gatling (Performance)
+- Carga em endpoints de listagem
+- Stress test no agendamento de consultas
+- Teste de concorrencia no mesmo horario
+
+### Postman / Newman (API Collections)
+- Workflow completo: registrar -> login -> cadastrar medico -> cadastrar paciente -> agendar -> cancelar

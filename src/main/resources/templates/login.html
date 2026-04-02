@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voll.med - Login</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <h1>Voll.med</h1>
+            <div th:if="${param.error}" class="alert alert-danger">
+                Login ou senha incorretos.
+            </div>
+            <div th:if="${param.logout}" class="alert alert-success">
+                Logout realizado com sucesso.
+            </div>
+            <form th:action="@{/login}" method="post">
+                <div class="form-group">
+                    <label for="username">Login</label>
+                    <input type="text" id="username" name="username" placeholder="Digite seu login" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" name="password" placeholder="Digite sua senha" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Entrar</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
