@@ -1,0 +1,1 @@
+ALTER TABLE doctors MODIFY state VARCHAR(2) NOT NULL;

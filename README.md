@@ -8,11 +8,11 @@ Sistema completo de gestao para a clinica Voll.med com API REST, autenticacao JW
 
 | Metodo | Endpoint | Descricao | Autenticacao |
 |--------|----------|-----------|--------------|
-| `POST` | `/auth/register` | Registrar novo usuario | Publica |
 | `POST` | `/auth/login` | Login (retorna JWT token) | Publica |
+| `POST` | `/auth/register` | Registrar novo usuario | ADMIN |
 
 **Perfis de acesso:**
-- `ADMIN` - Acesso total (CRUD completo + exclusao)
+- `ADMIN` - Acesso total (CRUD completo + exclusao + registro de usuarios)
 - `RECEPTIONIST` - Leitura, cadastro e edicao (sem permissao de exclusao)
 
 ### Medicos (`/doctors`)
@@ -21,6 +21,7 @@ Sistema completo de gestao para a clinica Voll.med com API REST, autenticacao JW
 |--------|----------|-----------|-----------|
 | `POST` | `/doctors` | Cadastrar medico | Autenticado |
 | `GET` | `/doctors` | Listar medicos ativos (paginado + filtros) | Autenticado |
+| `GET` | `/doctors/{id}` | Buscar medico por ID | Autenticado |
 | `PUT` | `/doctors/{id}` | Atualizar medico | Autenticado |
 | `DELETE` | `/doctors/{id}` | Remover medico | ADMIN |
 | `PATCH` | `/doctors/{id}/status` | Inativar medico | Autenticado |
@@ -33,6 +34,7 @@ Sistema completo de gestao para a clinica Voll.med com API REST, autenticacao JW
 |--------|----------|-----------|-----------|
 | `POST` | `/patients` | Cadastrar paciente | Autenticado |
 | `GET` | `/patients` | Listar pacientes ativos (paginado) | Autenticado |
+| `GET` | `/patients/{id}` | Buscar paciente por ID | Autenticado |
 | `PUT` | `/patients/{id}` | Atualizar paciente | Autenticado |
 | `DELETE` | `/patients/{id}` | Remover paciente | ADMIN |
 | `PATCH` | `/patients/{id}/status` | Inativar paciente | Autenticado |
@@ -76,15 +78,16 @@ Sistema completo de gestao para a clinica Voll.med com API REST, autenticacao JW
 | Java 17 | Linguagem |
 | Spring Boot 3.3.2 | Framework |
 | Spring Security | Autenticacao e autorizacao |
-| JWT (java-jwt) | Token de autenticacao na API |
+| JWT (java-jwt 4.4.0) | Token de autenticacao na API |
 | Spring Data JPA / Hibernate | Persistencia |
 | Spring Validation | Validacao de dados |
 | Thymeleaf | Templates do frontend |
 | Flyway | Migracoes de banco de dados |
-| MySQL | Banco de dados (producao) |
+| MySQL 8 | Banco de dados (producao) |
 | H2 Database | Banco de dados (testes) |
 | Lombok | Reducao de boilerplate |
 | Maven | Build e dependencias |
+| Docker / Docker Compose | Containerizacao |
 | GitHub Actions | CI/CD |
 
 ## Estrutura do Projeto
@@ -125,30 +128,12 @@ src/
 ├── main/resources/
 │   ├── application.properties
 │   ├── templates/                          # Paginas Thymeleaf
-│   │   ├── login.html
-│   │   ├── dashboard.html
-│   │   ├── doctors.html
-│   │   ├── doctor-form.html
-│   │   ├── patients.html
-│   │   ├── patient-form.html
-│   │   ├── appointments.html
-│   │   └── appointment-form.html
-│   ├── static/
-│   │   ├── css/style.css
-│   │   └── js/
-│   └── db/migration/                       # 6 migracoes Flyway
-└── test/
-    ├── java/med/voll/api/
-    │   ├── controller/
-    │   │   ├── DoctorControllerTest.java   # 10 testes de integracao
-    │   │   └── PatientControllerTest.java  # 6 testes de integracao
-    │   ├── service/
-    │   │   ├── DoctorServiceTest.java      # 9 testes unitarios
-    │   │   └── AppointmentServiceTest.java # 8 testes unitarios
-    │   └── repository/
-    │       └── DoctorRepositoryTest.java   # 4 testes de repositorio
-    └── resources/
-        └── application-test.properties
+│   ├── static/                             # CSS e JS
+│   └── db/migration/                       # 8 migracoes Flyway
+├── test/
+│   └── ...
+└── postman/
+    └── VollMed_API.postman_collection.json # Collection Postman completa
 ```
 
 ## Testes Automatizados - 37 testes
@@ -175,42 +160,81 @@ mvn test
 - Maven 3.8+
 - MySQL 8+
 
+### Variaveis de ambiente
+
+| Variavel | Descricao | Valor padrao |
+|----------|-----------|--------------|
+| `DB_URL` | URL de conexao JDBC | `jdbc:mysql://localhost:3306/voll_med_db` |
+| `DB_USERNAME` | Usuario do banco | `root` |
+| `DB_SECRET` | Senha do banco | `vollmed123` |
+| `JWT_SECRET` | Chave secreta para assinatura JWT | `minha-chave-secreta-temporaria` |
+
+> **Importante:** Em producao, defina `JWT_SECRET` com uma chave forte e unica.
+
 ### Configuracao do Banco de Dados
 
 ```sql
 CREATE DATABASE voll_med_db;
 ```
 
-### Execucao
+### Execucao local
 
 ```bash
 mvn spring-boot:run
 ```
 
-A aplicacao estara disponivel em `http://localhost:8080`.
+A aplicacao estara disponivel em `http://localhost:8082`.
+
+### Execucao com Docker
+
+```bash
+# Build do JAR
+mvn clean package -DskipTests
+
+# Subir MySQL + aplicacao
+docker-compose up -d
+```
+
+> **Nota:** Via Docker Compose, a aplicacao sobe na porta `8080` (mapeamento do container). Localmente, a porta configurada e `8082`.
 
 ### Primeiro acesso
 
-1. Registre um usuario via API:
+O endpoint `/auth/register` requer autenticacao com perfil ADMIN. Para criar o primeiro usuario, insira diretamente no banco:
+
+```sql
+-- Senha: admin123 (BCrypt hash)
+INSERT INTO users (login, password, role) VALUES (
+  'admin@vollmed.com',
+  '$2a$10$Y3Kb1qGGCniTGEClDTDeg.3v5aJKbGqX4T1r0cNBaTfuSNIBpyESy',
+  'ADMIN'
+);
+```
+
+Depois, faca login na API para obter o token JWT:
 ```bash
-curl -X POST http://localhost:8080/auth/register \
+curl -X POST http://localhost:8082/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"login": "admin", "password": "admin123", "role": "ADMIN"}'
+  -d '{"login": "admin@vollmed.com", "password": "admin123"}'
 ```
 
-2. Acesse o frontend em `http://localhost:8080/login` com as credenciais criadas.
-
-3. Ou obtenha um token JWT para usar na API:
+Use o token retornado nas demais requisicoes:
 ```bash
-curl -X POST http://localhost:8080/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"login": "admin", "password": "admin123"}'
+curl -H "Authorization: Bearer SEU_TOKEN" http://localhost:8082/doctors
 ```
 
-4. Use o token nas requisicoes:
-```bash
-curl -H "Authorization: Bearer SEU_TOKEN" http://localhost:8080/doctors
-```
+Ou acesse o frontend em `http://localhost:8082/login` com as credenciais criadas.
+
+## Collection Postman
+
+Uma collection completa esta disponivel em `postman/VollMed_API.postman_collection.json`.
+
+**Como importar:**
+1. Abra o Postman
+2. Clique em **Import** > arraste o arquivo ou selecione-o
+3. A variavel `baseUrl` ja vem configurada como `http://localhost:8082`
+4. Execute o request **Login** primeiro — o token JWT e salvo automaticamente para os demais requests
+
+**Fluxo recomendado:** Login > Register (opcional) > Cadastrar medico > Cadastrar paciente > Agendar consulta > Cancelar/Concluir
 
 ## Exemplos de Requisicoes (API)
 
@@ -265,7 +289,7 @@ Authorization: Bearer {token}
 {
   "doctorId": 1,
   "patientId": 1,
-  "appointmentDate": "2025-12-20T14:00:00"
+  "appointmentDate": "2026-12-20T14:00:00"
 }
 ```
 
@@ -278,32 +302,3 @@ Authorization: Bearer {token}
   "reason": "Paciente solicitou reagendamento"
 }
 ```
-
-## Cenarios para Automacao de Testes
-
-Este projeto foi desenhado para maximizar cenarios de automacao:
-
-### Selenium / Robot Framework (Frontend)
-- Login com credenciais validas/invalidas
-- Navegacao entre paginas (Dashboard, Medicos, Pacientes, Consultas)
-- Preenchimento de formularios com validacao
-- Filtros e paginacao na listagem de medicos
-- Acoes de editar, excluir, inativar
-- Mensagens de sucesso/erro
-- Modal de confirmacao de exclusao
-- Controle de acesso por perfil (ADMIN vs RECEPTIONIST)
-
-### Robot Framework + RequestsLibrary (API)
-- CRUD completo de medicos, pacientes e consultas
-- Validacao de status codes (200, 201, 204, 400, 403, 404)
-- Autenticacao JWT (login, token expirado, token invalido)
-- Regras de negocio de agendamento
-- Paginacao e filtros via query params
-
-### JMeter / Gatling (Performance)
-- Carga em endpoints de listagem
-- Stress test no agendamento de consultas
-- Teste de concorrencia no mesmo horario
-
-### Postman / Newman (API Collections)
-- Workflow completo: registrar -> login -> cadastrar medico -> cadastrar paciente -> agendar -> cancelar

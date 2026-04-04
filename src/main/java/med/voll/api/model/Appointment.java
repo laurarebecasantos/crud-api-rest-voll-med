@@ -32,8 +32,10 @@ public class Appointment {
     private LocalDateTime appointmentDate;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 20, nullable = false)
     private AppointmentStatus status;
 
+    @Column(length = 255)
     private String cancelReason;
 
     private LocalDateTime createdAt;

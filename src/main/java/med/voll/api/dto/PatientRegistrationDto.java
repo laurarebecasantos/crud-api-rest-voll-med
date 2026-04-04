@@ -3,6 +3,7 @@ package med.voll.api.dto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
 public record PatientRegistrationDto(
@@ -18,9 +19,10 @@ public record PatientRegistrationDto(
         String phone,
 
         @NotBlank(message = "CPF must not be blank")
-        @Pattern(regexp = "^[0-9]{11}", message = "CPF must be 11 digits")
+        @Pattern(regexp = "^[0-9]{11}$", message = "CPF must be 11 digits")
         String cpf,
 
+        @NotNull(message = "Address must not be null")
         @Valid
         AddressDto address
 ) {

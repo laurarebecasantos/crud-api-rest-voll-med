@@ -13,7 +13,7 @@ public record AddressDto(
 
 
         @NotBlank(message = "Zip code must not be blank")
-        @Pattern(regexp = "^[0-9]{8}", message = "Zip code must be 8 digits")
+        @Pattern(regexp = "^[0-9]{8}$", message = "Zip code must be 8 digits")
         String zipCode,
 
         @NotBlank(message = "City must not be blank")

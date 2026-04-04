@@ -11,7 +11,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -23,7 +22,7 @@ public class AppointmentController {
     private AppointmentService appointmentService;
 
     @PostMapping
-    @Transactional
+
     public ResponseEntity<AppointmentListingDto> schedule(@Valid @RequestBody AppointmentScheduleDto data,
                                                           UriComponentsBuilder uriBuilder) {
         Appointment saved = appointmentService.schedule(data);
@@ -46,14 +45,14 @@ public class AppointmentController {
     }
 
     @PatchMapping("/{id}/cancel")
-    @Transactional
+
     public ResponseEntity<Void> cancel(@PathVariable Long id, @Valid @RequestBody AppointmentCancelDto dto) {
         appointmentService.cancel(id, dto);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/complete")
-    @Transactional
+
     public ResponseEntity<Void> complete(@PathVariable Long id) {
         appointmentService.complete(id);
         return ResponseEntity.noContent().build();

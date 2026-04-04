@@ -20,12 +20,13 @@ public record DoctorRegistrationDto(
         String phone,
 
         @NotBlank(message = "CRM must not be blank")
-        @Pattern(regexp = "^[0-9]{6}", message = "CRM must be 6 digits")
+        @Pattern(regexp = "^[0-9]{6}$", message = "CRM must be 6 digits")
         String crm,
 
         @NotNull(message = "Speciality must not be null")
         Speciality speciality,
 
+        @NotNull(message = "Address must not be null")
         @Valid
         AddressDto address,
 

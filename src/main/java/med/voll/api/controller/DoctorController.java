@@ -12,7 +12,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -24,12 +23,17 @@ public class DoctorController {
     private DoctorService doctorService;
 
     @PostMapping
-    @Transactional
+
     public ResponseEntity<DoctorListingDto> register(@Valid @RequestBody DoctorRegistrationDto data,
                                                      UriComponentsBuilder uriBuilder) {
         Doctor dataSaved = doctorService.registerDoctor(data);
         var uri = uriBuilder.path("/doctors/{id}").buildAndExpand(dataSaved.getId()).toUri();
         return ResponseEntity.created(uri).body(new DoctorListingDto(dataSaved));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<DoctorListingDto> findById(@PathVariable Long id) {
+        return ResponseEntity.ok(doctorService.findById(id));
     }
 
     @GetMapping
@@ -41,21 +45,21 @@ public class DoctorController {
     }
 
     @PutMapping("/{id}")
-    @Transactional
+
     public ResponseEntity<DoctorListingDto> update(@PathVariable Long id, @Valid @RequestBody DoctorUpdateDto updateDto) {
         Doctor updateDataSaved = doctorService.updateDoctor(id, updateDto);
         return ResponseEntity.ok(new DoctorListingDto(updateDataSaved));
     }
 
     @DeleteMapping("/{id}")
-    @Transactional
+
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         doctorService.deleteDoctors(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/status")
-    @Transactional
+
     public ResponseEntity<Void> status(@PathVariable Long id) {
         doctorService.statusDoctors(id);
         return ResponseEntity.noContent().build();

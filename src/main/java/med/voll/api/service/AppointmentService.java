@@ -1,7 +1,7 @@
 package med.voll.api.service;
 
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import med.voll.api.dto.AppointmentCancelDto;
 import med.voll.api.dto.AppointmentListingDto;
 import med.voll.api.dto.AppointmentScheduleDto;
@@ -92,7 +92,7 @@ public class AppointmentService {
     }
 
     public Page<AppointmentListingDto> listAll(Pageable pageable) {
-        return appointmentRepository.findAll(pageable).map(AppointmentListingDto::new);
+        return appointmentRepository.findAllWithDoctorAndPatient(pageable).map(AppointmentListingDto::new);
     }
 
     public Page<AppointmentListingDto> listByDoctor(Long doctorId, Pageable pageable) {

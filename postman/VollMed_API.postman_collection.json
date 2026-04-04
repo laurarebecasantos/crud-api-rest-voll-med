@@ -1,0 +1,534 @@
+{
+	"info": {
+		"name": "Voll Med API",
+		"description": "Collection completa da API Voll Med - Sistema de gestão de clínica médica",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8082"
+		},
+		{
+			"key": "token",
+			"value": ""
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('token', jsonData.token);",
+									"    pm.test('Token saved', function () {",
+									"        pm.expect(jsonData.token).to.not.be.empty;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"login\": \"admin@vollmed.com\",\n    \"password\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "login"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 - Login bem sucedido",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n}"
+						},
+						{
+							"name": "403 - Credenciais invalidas",
+							"status": "Forbidden",
+							"code": 403,
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Register (requer ADMIN)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"login\": \"recepcionista@vollmed.com\",\n    \"password\": \"123456\",\n    \"role\": \"RECEPTIONIST\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "register"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 - Usuario registrado",
+							"status": "OK",
+							"code": 200,
+							"body": ""
+						},
+						{
+							"name": "400 - Login ja existe",
+							"status": "Bad Request",
+							"code": 400,
+							"body": ""
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Doctors",
+			"item": [
+				{
+					"name": "Register Doctor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Dr. João Silva\",\n    \"email\": \"joao.silva@vollmed.com\",\n    \"phone\": \"11999998888\",\n    \"crm\": \"123456\",\n    \"speciality\": \"CARDIOLOGY\",\n    \"address\": {\n        \"street\": \"Rua das Flores\",\n        \"neighborhood\": \"Centro\",\n        \"zipCode\": \"01001000\",\n        \"city\": \"São Paulo\",\n        \"state\": \"SP\",\n        \"complement\": \"Sala 101\",\n        \"number\": \"100\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/doctors",
+							"host": ["{{baseUrl}}"],
+							"path": ["doctors"]
+						}
+					},
+					"response": [
+						{
+							"name": "201 - Medico criado",
+							"status": "Created",
+							"code": 201,
+							"header": [
+								{ "key": "Location", "value": "http://localhost:8082/doctors/1" }
+							],
+							"body": "{\n    \"id\": 1,\n    \"name\": \"Dr. João Silva\",\n    \"phone\": \"11999998888\",\n    \"email\": \"joao.silva@vollmed.com\",\n    \"crm\": \"123456\",\n    \"speciality\": \"CARDIOLOGY\",\n    \"active\": true\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Doctor by ID",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/doctors/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["doctors", "1"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 - Medico encontrado",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"id\": 1,\n    \"name\": \"Dr. João Silva\",\n    \"phone\": \"11999998888\",\n    \"email\": \"joao.silva@vollmed.com\",\n    \"crm\": \"123456\",\n    \"speciality\": \"CARDIOLOGY\",\n    \"active\": true\n}"
+						},
+						{
+							"name": "404 - Medico nao encontrado",
+							"status": "Not Found",
+							"code": 404,
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "List Doctors",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/doctors?page=0&size=10&sort=name",
+							"host": ["{{baseUrl}}"],
+							"path": ["doctors"],
+							"query": [
+								{ "key": "page", "value": "0" },
+								{ "key": "size", "value": "10" },
+								{ "key": "sort", "value": "name" },
+								{ "key": "name", "value": "", "disabled": true },
+								{ "key": "speciality", "value": "CARDIOLOGY", "disabled": true }
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "200 - Lista paginada",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"content\": [\n        {\n            \"id\": 1,\n            \"name\": \"Dr. João Silva\",\n            \"phone\": \"11999998888\",\n            \"email\": \"joao.silva@vollmed.com\",\n            \"crm\": \"123456\",\n            \"speciality\": \"CARDIOLOGY\",\n            \"active\": true\n        }\n    ],\n    \"totalElements\": 1,\n    \"totalPages\": 1,\n    \"size\": 10,\n    \"number\": 0\n}"
+						}
+					]
+				},
+				{
+					"name": "Update Doctor",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Dr. João Silva Junior\",\n    \"phone\": \"11988887777\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/doctors/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["doctors", "1"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 - Medico atualizado",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"id\": 1,\n    \"name\": \"Dr. João Silva Junior\",\n    \"phone\": \"11988887777\",\n    \"email\": \"joao.silva@vollmed.com\",\n    \"crm\": \"123456\",\n    \"speciality\": \"CARDIOLOGY\",\n    \"active\": true\n}"
+						}
+					]
+				},
+				{
+					"name": "Inactivate Doctor (soft delete)",
+					"request": {
+						"method": "PATCH",
+						"url": {
+							"raw": "{{baseUrl}}/doctors/1/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["doctors", "1", "status"]
+						}
+					},
+					"response": [
+						{
+							"name": "204 - Medico inativado",
+							"status": "No Content",
+							"code": 204,
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Delete Doctor (hard delete - ADMIN only)",
+					"request": {
+						"method": "DELETE",
+						"url": {
+							"raw": "{{baseUrl}}/doctors/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["doctors", "1"]
+						}
+					},
+					"response": [
+						{
+							"name": "204 - Medico deletado",
+							"status": "No Content",
+							"code": 204,
+							"body": ""
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Patients",
+			"item": [
+				{
+					"name": "Register Patient",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Maria Souza\",\n    \"email\": \"maria.souza@email.com\",\n    \"phone\": \"11977776666\",\n    \"cpf\": \"12345678901\",\n    \"address\": {\n        \"street\": \"Av. Paulista\",\n        \"neighborhood\": \"Bela Vista\",\n        \"zipCode\": \"01310100\",\n        \"city\": \"São Paulo\",\n        \"state\": \"SP\",\n        \"complement\": \"Apto 42\",\n        \"number\": \"1000\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/patients",
+							"host": ["{{baseUrl}}"],
+							"path": ["patients"]
+						}
+					},
+					"response": [
+						{
+							"name": "201 - Paciente criado",
+							"status": "Created",
+							"code": 201,
+							"header": [
+								{ "key": "Location", "value": "http://localhost:8082/patients/1" }
+							],
+							"body": "{\n    \"id\": 1,\n    \"name\": \"Maria Souza\",\n    \"email\": \"maria.souza@email.com\",\n    \"phone\": \"11977776666\",\n    \"cpf\": \"12345678901\",\n    \"active\": true\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Patient by ID",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/patients/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["patients", "1"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 - Paciente encontrado",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"id\": 1,\n    \"name\": \"Maria Souza\",\n    \"email\": \"maria.souza@email.com\",\n    \"phone\": \"11977776666\",\n    \"cpf\": \"12345678901\",\n    \"active\": true\n}"
+						},
+						{
+							"name": "404 - Paciente nao encontrado",
+							"status": "Not Found",
+							"code": 404,
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "List Patients",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/patients?page=0&size=10&sort=name",
+							"host": ["{{baseUrl}}"],
+							"path": ["patients"],
+							"query": [
+								{ "key": "page", "value": "0" },
+								{ "key": "size", "value": "10" },
+								{ "key": "sort", "value": "name" }
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "200 - Lista paginada",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"content\": [\n        {\n            \"id\": 1,\n            \"name\": \"Maria Souza\",\n            \"email\": \"maria.souza@email.com\",\n            \"phone\": \"11977776666\",\n            \"cpf\": \"12345678901\",\n            \"active\": true\n        }\n    ],\n    \"totalElements\": 1,\n    \"totalPages\": 1,\n    \"size\": 10,\n    \"number\": 0\n}"
+						}
+					]
+				},
+				{
+					"name": "Update Patient",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Maria Souza Santos\",\n    \"phone\": \"11966665555\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/patients/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["patients", "1"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 - Paciente atualizado",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"id\": 1,\n    \"name\": \"Maria Souza Santos\",\n    \"email\": \"maria.souza@email.com\",\n    \"phone\": \"11966665555\",\n    \"cpf\": \"12345678901\",\n    \"active\": true\n}"
+						}
+					]
+				},
+				{
+					"name": "Inactivate Patient (soft delete)",
+					"request": {
+						"method": "PATCH",
+						"url": {
+							"raw": "{{baseUrl}}/patients/1/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["patients", "1", "status"]
+						}
+					},
+					"response": [
+						{
+							"name": "204 - Paciente inativado",
+							"status": "No Content",
+							"code": 204,
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Delete Patient (hard delete - ADMIN only)",
+					"request": {
+						"method": "DELETE",
+						"url": {
+							"raw": "{{baseUrl}}/patients/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["patients", "1"]
+						}
+					},
+					"response": [
+						{
+							"name": "204 - Paciente deletado",
+							"status": "No Content",
+							"code": 204,
+							"body": ""
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Appointments",
+			"item": [
+				{
+					"name": "Schedule Appointment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"doctorId\": 1,\n    \"patientId\": 1,\n    \"appointmentDate\": \"2026-04-10T14:00:00\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/appointments",
+							"host": ["{{baseUrl}}"],
+							"path": ["appointments"]
+						}
+					},
+					"response": [
+						{
+							"name": "201 - Consulta agendada",
+							"status": "Created",
+							"code": 201,
+							"header": [
+								{ "key": "Location", "value": "http://localhost:8082/appointments/1" }
+							],
+							"body": "{\n    \"id\": 1,\n    \"doctorName\": \"Dr. João Silva\",\n    \"doctorCrm\": \"123456\",\n    \"patientName\": \"Maria Souza\",\n    \"patientCpf\": \"12345678901\",\n    \"appointmentDate\": \"2026-04-10T14:00:00\",\n    \"status\": \"SCHEDULED\",\n    \"cancelReason\": null\n}"
+						},
+						{
+							"name": "400 - Medico ja tem consulta neste horario",
+							"status": "Bad Request",
+							"code": 400,
+							"body": "{\n    \"message\": \"Doctor already has an appointment at this time\"\n}"
+						}
+					]
+				},
+				{
+					"name": "List Appointments",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/appointments?page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["appointments"],
+							"query": [
+								{ "key": "page", "value": "0" },
+								{ "key": "size", "value": "10" },
+								{ "key": "doctorId", "value": "1", "disabled": true },
+								{ "key": "patientId", "value": "1", "disabled": true }
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "200 - Lista paginada",
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"content\": [\n        {\n            \"id\": 1,\n            \"doctorName\": \"Dr. João Silva\",\n            \"doctorCrm\": \"123456\",\n            \"patientName\": \"Maria Souza\",\n            \"patientCpf\": \"12345678901\",\n            \"appointmentDate\": \"2026-04-10T14:00:00\",\n            \"status\": \"SCHEDULED\",\n            \"cancelReason\": null\n        }\n    ],\n    \"totalElements\": 1,\n    \"totalPages\": 1,\n    \"size\": 10,\n    \"number\": 0\n}"
+						}
+					]
+				},
+				{
+					"name": "Cancel Appointment",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"reason\": \"Paciente solicitou cancelamento\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/appointments/1/cancel",
+							"host": ["{{baseUrl}}"],
+							"path": ["appointments", "1", "cancel"]
+						}
+					},
+					"response": [
+						{
+							"name": "204 - Consulta cancelada",
+							"status": "No Content",
+							"code": 204,
+							"body": ""
+						},
+						{
+							"name": "400 - Consulta ja cancelada",
+							"status": "Bad Request",
+							"code": 400,
+							"body": "{\n    \"message\": \"Appointment is already cancelled\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Complete Appointment",
+					"request": {
+						"method": "PATCH",
+						"url": {
+							"raw": "{{baseUrl}}/appointments/1/complete",
+							"host": ["{{baseUrl}}"],
+							"path": ["appointments", "1", "complete"]
+						}
+					},
+					"response": [
+						{
+							"name": "204 - Consulta concluida",
+							"status": "No Content",
+							"code": 204,
+							"body": ""
+						},
+						{
+							"name": "400 - Consulta nao esta agendada",
+							"status": "Bad Request",
+							"code": 400,
+							"body": "{\n    \"message\": \"Only scheduled appointments can be completed\"\n}"
+						}
+					]
+				}
+			]
+		}
+	]
+}

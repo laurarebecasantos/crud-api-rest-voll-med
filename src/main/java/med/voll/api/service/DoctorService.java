@@ -1,7 +1,7 @@
 package med.voll.api.service;
 
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import med.voll.api.dto.DoctorListingDto;
 import med.voll.api.dto.DoctorRegistrationDto;
 import med.voll.api.dto.DoctorUpdateDto;
@@ -38,6 +38,12 @@ public class DoctorService {
     public Page<DoctorListingDto> listDoctorsPaginated(Pageable pageable) {
         return doctorRepository.findAllByActiveTrue(pageable)
                 .map(DoctorListingDto::new);
+    }
+
+    public DoctorListingDto findById(Long id) {
+        Doctor doctor = doctorRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Doctor not found with id: " + id));
+        return new DoctorListingDto(doctor);
     }
 
     public Page<DoctorListingDto> listDoctorsFiltered(String name, Speciality speciality, Pageable pageable) {
